@@ -1,5 +1,8 @@
 from django.db import models
 
+from blog.blog_users.models import BlogUser
+
+
 class Post(models.Model):
     use_in_migration = True
     post_id = models.AutoField(primary_key=True)
@@ -7,6 +10,9 @@ class Post(models.Model):
     content = models.TextField()
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    blog_user = models.ForeignKey(BlogUser, on_delete=models.CASCADE)
+
     class Meta:
         db_table = "blog_posts"
     def __str__(self):

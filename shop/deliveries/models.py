@@ -1,5 +1,8 @@
 from django.db import models
 
+from shop.shop_users.models import ShopUser
+
+
 class Delivery(models.Model):
     use_in_migration = True
     delivery_id = models.AutoField(primary_key=True)
@@ -7,6 +10,9 @@ class Delivery(models.Model):
     address = models.TextField()
     detail_address = models.TextField()
     phone = models.TextField()
+
+    shop_user = models.ForeignKey(ShopUser, on_delete=models.CASCADE)
+
     class Meta:
         db_table = "shop_deliveries"
     def __str__(self):
