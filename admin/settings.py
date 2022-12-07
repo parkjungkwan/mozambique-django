@@ -31,32 +31,25 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    "blog.blog_users.apps.BlogUserConfig",
-    "blog.posts.apps.PostConfig",
-    "blog.tags.apps.TagsConfig",
-    "blog.comments.apps.CommentsConfig",
-    "blog.views.apps.ViewsConfig",
-    "multiplex.movies.apps.MoviesConfig",
-    "multiplex.cinemas.apps.CinemasConfig",
-    "multiplex.theaters.apps.TheatersConfig",
-    "multiplex.showtimes.apps.ShowtimesConfig",
-    "multiplex.movie_users.apps.MovieUsersConfig",
-    "multiplex.theater_tickets.apps.TheaterTicketsConfig",
-    "shop.shop_users.apps.ShopUsersConfig",
-    "shop.carts.apps.CartsConfig",
-    "shop.orders.apps.OrdersConfig",
-    "shop.products.apps.ProductsConfig",
-    "shop.categories.apps.CategoriesConfig",
-    "shop.deliveries.apps.DeliveriesConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "blog",
+    "multiplex",
+    "shop",
+    "rest_framework"
 ]
 
+# CORS 관련 추가
+CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:3000'
+                         ,'http://localhost:3000']
+CORS_ALLOW_CREDENTIALS = True
+
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -64,6 +57,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
 ]
 
 ROOT_URLCONF = "admin.urls"

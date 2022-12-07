@@ -7,6 +7,7 @@ class Cinema(models.Model):
     image_url = models.TextField()
     address = models.TextField()
     detail_address = models.TextField()
+
     class Meta:
         db_table = "multiplex_cinemas"
     def __str__(self):
