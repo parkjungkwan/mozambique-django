@@ -13,12 +13,13 @@ class MyFashion:
         for i in range(10):
             axs[i].imshow(train_input[i], cmap='gray_r')
             axs[i].axis('off')
-        plt.show()
-
         fn = "{}.png".format("fashion")
         plt.savefig(fn)
         target = cv.imread(fn)
-        cv.imwrite(r"C:\Users\AIA\ReactProject\multiplex\src\images\fashion.png", target)
+        target = cv.resize(target, (1000, 500))
+        dir = r"C:\Users\AIA\ReactProject\multiplex\src\images"
+        cv.imwrite(dir+r"\fashion.png", target)
+        plt.show()
 
 if __name__ == '__main__':
     m = MyFashion()
