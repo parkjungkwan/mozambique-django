@@ -1,6 +1,4 @@
 from __future__ import print_function
-#%matplotlib inline
-import argparse
 import os
 import random
 import torch
@@ -19,7 +17,26 @@ from IPython.display import HTML
 from tqdm import tqdm
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-
+'''
+https://arxiv.org/abs/1511.06434
+Unsupervised Representation Learning 
+with Deep Convolutional Generative Adversarial Networks
+Alec Radford, Luke Metz, Soumith Chintala
+In recent years, supervised learning with convolutional networks (CNNs) 
+has seen huge adoption in computer vision applications. 
+Comparatively, unsupervised learning with CNNs has received less attention. 
+In this work we hope to help bridge the gap 
+between the success of CNNs for supervised learning and unsupervised learning. 
+We introduce a class of CNNs called 
+deep convolutional generative adversarial networks (DCGANs), 
+that have certain architectural constraints, and demonstrate 
+that they are a strong candidate for unsupervised learning. 
+Training on various image datasets, we show convincing evidence 
+that our deep convolutional adversarial pair learns a hierarchy of representations 
+from object parts to scenes in both the generator and discriminator. 
+Additionally, we use the learned features for novel tasks 
+- demonstrating their applicability as general image representations.
+'''
 class DcGan(object):
     def __init__(self):
         # Root directory for dataset
@@ -48,15 +65,15 @@ class DcGan(object):
         # Number of GPUs available. Use 0 for CPU mode.
         self.ngpu = 1
         self.manualSeed = 999
+        self.device = None
 
-    def show_face(self):
+    def show_face(self) -> str:
         manualSeed = self.manualSeed
         dataroot = self.dataroot
         image_size = self.image_size
         batch_size = self.batch_size
         workers = self.workers
         ngpu = self.ngpu
-
         print("Random Seed: ", manualSeed)
         random.seed(manualSeed)
         torch.manual_seed(manualSeed)
@@ -69,12 +86,12 @@ class DcGan(object):
                                    ]))
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                                  shuffle=True, num_workers=workers)
-        device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
+        self.device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
         real_batch = next(iter(dataloader))
         plt.figure(figsize=(8,8))
         plt.axis("off")
         plt.title("Training Images")
-        plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
+        plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(self.device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
         plt.show()
 
     # custom weights initialization called on netG and netD
@@ -86,14 +103,14 @@ class DcGan(object):
             nn.init.normal_(m.weight.data, 1.0, 0.02)
             nn.init.constant_(m.bias.data, 0)
 
-    def printNetG(self):
+    def print_netG(self):
         # Create the generator
         ngpu = self.ngpu
         device = None
         netG = Generator(ngpu).to(device)
 
         # Handle multi-gpu if desired
-        if (device.type == 'cuda') and (ngpu > 1):
+        if (self.device.type == 'cuda') and (ngpu > 1):
             netG = nn.DataParallel(netG, list(range(ngpu)))
 
         # Apply the weights_init function to randomly initialize all weights
@@ -102,6 +119,23 @@ class DcGan(object):
 
         # Print the model
         print(netG)
+
+    def print_netD(self):
+        ngpu = self.ngpu
+        device = self.device
+        # Create the Discriminator
+        netD = Discriminator(ngpu).to(device)
+
+        # Handle multi-gpu if desired
+        if (device.type == 'cuda') and (ngpu > 1):
+            netD = nn.DataParallel(netD, list(range(ngpu)))
+
+        # Apply the weights_init function to randomly initialize all weights
+        #  to mean=0, stdev=0.2.
+        netD.apply(self.weights_init)
+
+        # Print the model
+        print(netD)
 
 class Generator(nn.Module):
     def __init__(self, ngpu):
@@ -138,6 +172,38 @@ class Generator(nn.Module):
     def forward(self, input):
         return self.main(input)
 
+class Discriminator(nn.Module):
+    def __init__(self, ngpu):
+        super(Discriminator, self).__init__()
+        self.ngpu = ngpu
+        that = DcGan()
+        nc = that.nc
+        ndf = that.ndf
+
+        self.main = nn.Sequential(
+            # input is (nc) x 64 x 64
+            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf) x 32 x 32
+            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*2) x 16 x 16
+            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, input):
+        return self.main(input)
+
 def spec(param):
     (lambda x: print(f"--- 1.Shape ---\n{x.shape}\n"
                      f"--- 2.Features ---\n{x.columns}\n"
@@ -147,17 +213,17 @@ def spec(param):
                      f"--- 6.Describe ---\n{x.describe()}\n"
                      f"--- 7.Describe All ---\n{x.describe(include='all')}"))(param)
 dc_menu = ["Exit", #0
-                "이미지 데이터셋 로딩",#1
-                "NetG 출력",#2.
-                "",#3
-                "",#4
+                "/mplex/movies/faces",# 1. Loading CelebA Dataset
+                "/mplex/movies/netG",#2.
+                "/mplex/movies/netD",#3
+                "/mplex/movies/fakeImages",#4
                 "",#5
                 "",#6
                 ]
 dc_lambda = {
     "1" : lambda x: x.show_face(),
-    "2" : lambda x: x.printNetG(),
-    "3" : lambda x: x.save_cctv_pop(),
+    "2" : lambda x: x.print_netG(),
+    "3" : lambda x: x.print_netD(),
     "4" : lambda x: x.save_police_norm(),
     "5" : lambda x: x.save_us_unemployment_map(),
     "6" : lambda x: x.save_seoul_crime_map(),
@@ -166,15 +232,15 @@ if __name__ == '__main__':
     dc = DcGan()
     while True:
         [print(f"{i}. {j}") for i, j in enumerate(dc_menu)]
-        menu = input('메뉴선택: ')
+        menu = input('Choose Menu: ')
         if menu == '0':
-            print("종료")
+            print("Exit")
             break
         else:
             try:
                 dc_lambda[menu](dc)
             except KeyError as e:
-                if 'some error message' in str(e):
+                if 'Some error message' in str(e):
                     print('Caught error message')
                 else:
                     print("Didn't catch error message")
