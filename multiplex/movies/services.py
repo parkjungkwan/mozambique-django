@@ -15,6 +15,9 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from IPython.display import HTML
 from tqdm import tqdm
+
+
+
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 '''
@@ -57,7 +60,7 @@ class DcGan(object):
         # Size of feature maps in discriminator
         self.ndf = 64
         # Number of training epochs
-        self.num_epochs = 10
+        self.num_epochs = 1 # Orginal Counter is 10
         # Learning rate for optimizers
         self.lr = 0.0002
         # Beta1 hyperparam for Adam optimizers
@@ -66,6 +69,13 @@ class DcGan(object):
         self.ngpu = 1
         self.manualSeed = 999
         self.device = None
+
+    def hook(self):
+        self.show_face()
+        self.weights_init()
+        self.print_netG()
+        self.print_netD()
+        self.generate_fake_images()
 
     def show_face(self) -> str:
         manualSeed = self.manualSeed
@@ -85,7 +95,8 @@ class DcGan(object):
                                        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                                    ]))
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
-                                                 shuffle=True, num_workers=workers)
+                                                 shuffle=True, num_workers=workers,
+                                                 multiprocessing_context='spawn') # spawn help speed up
         self.device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
         real_batch = next(iter(dataloader))
         plt.figure(figsize=(8,8))
@@ -136,6 +147,9 @@ class DcGan(object):
 
         # Print the model
         print(netD)
+
+    def generate_fake_faces(self):
+        pass
 
 class Generator(nn.Module):
     def __init__(self, ngpu):
@@ -204,6 +218,113 @@ class Discriminator(nn.Module):
     def forward(self, input):
         return self.main(input)
 
+
+import sys
+import dlib  # conda install -c conda-forge dlib
+import cv2
+import openface
+'''
+mkdir openface
+cd openface
+git clone https://github.com/cmusatyalab/openface.git ~/openface
+cd ./~
+cd openface
+python setup.py install
+'''
+class MyDlib(object):
+    def __init__(self):
+        pass
+
+    def hook(self):
+        # http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
+        # 학습된 랜드마크 모델 데이터 경로
+        predictor_model = "shape_predictor_68_face_landmarks.dat"
+
+        # HOG 이용한 얼굴 감지 클래스 생성 - dlib
+        face_detector = dlib.get_frontal_face_detector()
+
+        # 얼굴에 랜드마크 찾는 클래스 생성 - dlib
+        # 매개변수로 랜드마크 모델
+        face_pose_predictor = dlib.shape_predictor(predictor_model)
+
+        # 랜드마크를 이용해 얼굴을 정렬할 클래스 생성 - Openface
+        # 매개변수로 랜드마크 모델
+        face_aligner = openface.AlignDlib(predictor_model)
+
+        # 첫번째 매개변수로 부터 전달 받은 이미지 파일 경로
+        file_name = sys.argv[1]
+
+        # 이미지 파일 경로로 부터 이미지(numpy.ndarry) 불러오기
+        image = cv2.imread(file_name)
+
+        '''
+         이미지에서 얼굴 찾기
+         얼굴 인식 두번째 변수 1은 업샘플링을 한번 하겠다는 얘기인데
+         업샘플링을하면 더 많이 인식할 수 있다고 한다.
+         다만 값이 커질수록 느리고 메모리도 많이 잡아먹는다.
+         그냥 1이면 될 듯. 
+        '''
+        detected_faces = face_detector(image, 1)
+
+        '''
+         detected_faces는 얼굴을 찾은 위치를 가지고 있는 
+         "list of rectagles"로 rect형 리스트라고 보면 된다.
+         이미지 파일에서 찾은 얼굴 개수 표시 
+        '''
+        print("Found {} faces in the image file {}".format(len(detected_faces), file_name))
+
+        # 찾은 얼굴 개수 만큼 반복한다.
+        for i, face_rect in enumerate(detected_faces):
+            '''
+            찾은 얼굴 인댁스, 왼쪽, 위, 오른쪽, 아래 위치 (사각형)표시 
+            '''
+            print(
+                "- Face #{} found at Left: {} Top: {} Right: {} Bottom: {}".format(i, face_rect.left(), face_rect.top(),
+                                                                                   face_rect.right(),
+                                                                                   face_rect.bottom()))
+
+            # 얼굴 위치에서 랜드마크 찾기
+            pose_landmarks = face_pose_predictor(image, face_rect)
+            '''
+            pose_landmarks는 dlib의 full_object_detection 클래스이고 
+            num_parts
+                랜드마크 개수 - 68이 나와야 정상 
+
+            part(idx) → dlib.point
+                idx(랜드마크 번호) point(x, y) 변수
+
+            parts() → dlib.points
+                랜드마크 전체의 points 
+            rect
+                얼굴 위치 left(), top(), right(), bottom() 
+            '''
+
+            '''	    
+            인식된 랜드마크를 openface를 이용해 변환
+            532 - imgDim
+                이미지 크기 532는 532x532 이미지로 반환하겠다는 뜻 
+            image - rgbImg
+                변환 시킬 원본 이미지 : (높이, 너비, 3)
+            face_rect - bb
+                얼굴 위치 (rect)
+            landmarkIndices
+                변환 대상의 인덱스.
+                openface.AlignDlib.OUTER_EYES_AND_NOSE
+                 [36, 45, 33]
+                openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP
+                 [39, 42, 57]
+            '''
+            alignedFace = face_aligner.align(532, image, face_rect,
+                                             landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+            '''
+            alignedFace 는 RGB(ndarray) 이미지      
+            '''
+
+            # aligned_face_x.jpg 로 저장
+            cv2.imwrite("aligned_face_{}.jpg".format(i), alignedFace)
+
+
+
 def spec(param):
     (lambda x: print(f"--- 1.Shape ---\n{x.shape}\n"
                      f"--- 2.Features ---\n{x.columns}\n"
@@ -213,20 +334,15 @@ def spec(param):
                      f"--- 6.Describe ---\n{x.describe()}\n"
                      f"--- 7.Describe All ---\n{x.describe(include='all')}"))(param)
 dc_menu = ["Exit", #0
-                "/mplex/movies/faces",# 1. Loading CelebA Dataset
-                "/mplex/movies/netG",#2.
-                "/mplex/movies/netD",#3
-                "/mplex/movies/fakeImages",#4
+                "/mplex/movies/fake-faces",# 1. Loading CelebA Dataset
+                "/mplex/movies/face-blow-up",#2. Blow Up Face By DLib
+                "",#3
+                "",#4
                 "",#5
                 "",#6
                 ]
 dc_lambda = {
-    "1" : lambda x: x.show_face(),
-    "2" : lambda x: x.print_netG(),
-    "3" : lambda x: x.print_netD(),
-    "4" : lambda x: x.save_police_norm(),
-    "5" : lambda x: x.save_us_unemployment_map(),
-    "6" : lambda x: x.save_seoul_crime_map(),
+    "1" : lambda x: x.hook(),
 }
 if __name__ == '__main__':
     dc = DcGan()
