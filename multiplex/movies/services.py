@@ -77,6 +77,67 @@ class DcGan(object):
         plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
         plt.show()
 
+    # custom weights initialization called on netG and netD
+    def weights_init(self, m):
+        classname = m.__class__.__name__
+        if classname.find('Conv') != -1:
+            nn.init.normal_(m.weight.data, 0.0, 0.02)
+        elif classname.find('BatchNorm') != -1:
+            nn.init.normal_(m.weight.data, 1.0, 0.02)
+            nn.init.constant_(m.bias.data, 0)
+
+    def printNetG(self):
+        # Create the generator
+        ngpu = self.ngpu
+        device = None
+        netG = Generator(ngpu).to(device)
+
+        # Handle multi-gpu if desired
+        if (device.type == 'cuda') and (ngpu > 1):
+            netG = nn.DataParallel(netG, list(range(ngpu)))
+
+        # Apply the weights_init function to randomly initialize all weights
+        #  to mean=0, stdev=0.02.
+        netG.apply(self.weights_init)
+
+        # Print the model
+        print(netG)
+
+class Generator(nn.Module):
+    def __init__(self, ngpu):
+        super(Generator, self).__init__()
+        self.ngpu = ngpu
+        that = DcGan()
+        nz = that.nz
+        ngf = that.ngf
+        nc = that.nc
+
+        self.main = nn.Sequential(
+            # input is Z, going into a convolution
+            nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=False),
+            nn.BatchNorm2d(ngf * 8),
+            nn.ReLU(True),
+            # state size. (ngf*8) x 4 x 4
+            nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 4),
+            nn.ReLU(True),
+            # state size. (ngf*4) x 8 x 8
+            nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
+            # state size. (ngf*2) x 16 x 16
+            nn.ConvTranspose2d(ngf * 2, ngf, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf),
+            nn.ReLU(True),
+            # state size. (ngf) x 32 x 32
+            nn.ConvTranspose2d(ngf, nc, 4, 2, 1, bias=False),
+            nn.Tanh()
+            # state size. (nc) x 64 x 64
+        )
+
+    def forward(self, input):
+        return self.main(input)
+
 def spec(param):
     (lambda x: print(f"--- 1.Shape ---\n{x.shape}\n"
                      f"--- 2.Features ---\n{x.columns}\n"
@@ -86,16 +147,16 @@ def spec(param):
                      f"--- 6.Describe ---\n{x.describe()}\n"
                      f"--- 7.Describe All ---\n{x.describe(include='all')}"))(param)
 dc_menu = ["Exit", #0
-                "Show Images",#1
-                "Save Police Position",#2.
-                "Save CCTV Population",#3
-                "Save Police Normalization",#4
-                "Save US Unemployment Map",#5
-                "Save Seoul Crime Map",#6
+                "이미지 데이터셋 로딩",#1
+                "NetG 출력",#2.
+                "",#3
+                "",#4
+                "",#5
+                "",#6
                 ]
 dc_lambda = {
     "1" : lambda x: x.show_face(),
-    "2" : lambda x: x.save_police_pos(),
+    "2" : lambda x: x.printNetG(),
     "3" : lambda x: x.save_cctv_pop(),
     "4" : lambda x: x.save_police_norm(),
     "5" : lambda x: x.save_us_unemployment_map(),
