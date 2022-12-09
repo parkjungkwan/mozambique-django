@@ -18,3 +18,4 @@ class Post(models.Model):
     def __str__(self):
         return f'{self.pk} {self.title} {self.content} {self.create_at}' \
                f' {self.updated_at}'
+
