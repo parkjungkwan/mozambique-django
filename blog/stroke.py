@@ -3,9 +3,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OrdinalEncoder
 from imblearn.under_sampling import RandomUnderSampler
 
-from blog.path import static
-
-
 stroke_meta = {
     'id':'아이디', 'gender':'성별', 'age':'나이', 
     'hypertension':'고혈압',
@@ -44,11 +41,11 @@ None
 
 class Stroke:
 
-    data_path = f"{static}/data/dam/stroke"
-    save = f"{static}/save/dam/stroke"
+    data = f"./data/stroke"
+    save = f"./save/stroke"
 
     def __init__(self):
-        self.stroke = pd.read_csv(f'{self.data_path}/healthcare-dataset-stroke-data.csv')
+        self.stroke = pd.read_csv(f'{self.data}/healthcare-dataset-stroke-data.csv')
         self.my_stroke = None
         self.adult_stoke = None
         self.target = None
