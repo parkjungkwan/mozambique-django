@@ -1,11 +1,18 @@
 import numpy as np
 import pandas as pd
+from matplotlib import font_manager, rc
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OrdinalEncoder
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
+import seaborn as sns
+import matplotlib.pyplot as plt
+font_path = "C:/Windows/Fonts/malgunbd.ttf"
+font = font_manager.FontProperties(fname=font_path).get_name()
+rc('font', family=font)
+
 stroke_meta = {
     'id':'아이디', 'gender':'성별', 'age':'나이', 
     'hypertension':'고혈압',
@@ -207,6 +214,14 @@ class Stroke:
                                index=feature_names, columns=['Feature_importances'])
             dft1 = dft.sort_values(by="Feature_importances", ascending=False)
             print(dft1)
+            ax = sns.barplot(y=dft1.index, x="Feature_importances", data=dft1)
+            for p in ax.patches:
+                ax.annotate("%.3f" % p.get_width(), (p.get_x() + p.get_width(), p.get_y()+1),
+                            xytext = (5, 10), textcoords = 'offset points')
+            plt.show()
+
+
+
 
 
 
