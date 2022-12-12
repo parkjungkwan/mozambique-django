@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OrdinalEncoder
 from imblearn.under_sampling import RandomUnderSampler
-
+from sklearn.tree import DecisionTreeClassifier
 
 stroke_meta = {
     'id':'아이디', 'gender':'성별', 'age':'나이', 
@@ -51,6 +51,14 @@ class Stroke:
         self.adult_stoke = None
         self.target = None
         self.data = None
+        self.X_train = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
+
+    def hook(self):
+        pass
+
     '''
     1.스펙보기
     '''
@@ -147,12 +155,25 @@ class Stroke:
         undersample = RandomUnderSampler(sampling_strategy=0.333, random_state=2)
         data_under, target_under = undersample.fit_resample(data, target)
         print(target_under.value_counts(dropna=True))
-        X_train, X_test, y_train, y_test = train_test_split(data_under, target_under,
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(data_under, target_under,
                                                             test_size=0.5, random_state=42, stratify=target_under)
-        print("X_train shape:", X_train.shape)
-        print("X_test shape:", X_test.shape)
-        print("y_train shape:", y_train.shape)
-        print("y_test shape:", y_test.shape)
+        print("X_train shape:", self.X_train.shape)
+        print("X_test shape:", self.X_test.shape)
+        print("y_train shape:", self.y_train.shape)
+        print("y_test shape:", self.y_test.shape)
+
+    def learning(self):
+        X_train = self.X_train
+        X_test = self.X_test
+        y_train = self.y_train
+        y_test = self.y_test
+        tree = DecisionTreeClassifier(random_state=0)
+        tree.fit(X_train, y_train)
+        print("Accuracy on training set: {:.5f}".format(tree.score(X_train, y_train)))
+        print("Accuracy on test set: {:.5f}".format(tree.score(X_test, y_test)))
+
+
+
 
 stroke_menu = ["Exit", #0
                 "Spec",#1
@@ -164,7 +185,7 @@ stroke_menu = ["Exit", #0
                 "미완성: Fit",#7
                 "미완성: Predicate"]#8
 stroke_lambda = {
-    "1" : lambda x: x.spec(),
+    "1" : lambda x: x.hook(),
     "2" : lambda x: x.rename_meta(),
     "3" : lambda x: x.interval_variables(),
     "4" : lambda x: x.categorical_variables(),
