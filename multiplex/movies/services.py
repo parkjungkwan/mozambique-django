@@ -42,33 +42,34 @@ Additionally, we use the learned features for novel tasks
 '''
 class DcGan(object):
     def __init__(self):
-        # Root directory for dataset
-        self.dataroot = r'C:\Users\AIA\PycharmProjects\djangoProject\multiplex\data'
-        # Number of workers for dataloader
+        # Celeb A 데이터셋 경로
+        self.dataroot = r'C:\Users\AIA\PycharmProjects\djangoProject\multiplex\movies\data'
+        # 데이터로더 갯수
         self.workers = 2
-        # Batch size during training
+        # 훈련시 배치사이즈
         self.batch_size = 128
-        # Spatial size of training images. All images will be resized to this
-        #   size using a transformer.
+        # 훈련시 이미지사이즈 변경
         self.image_size = 64
-        # Number of channels in the training images. For color images this is 3
+        # 훈련이미지 채널 수
         self.nc = 3
-        # Size of z latent vector (i.e. size of generator input)
+        # 벡터 사이즈
         self.nz = 100
-        # Size of feature maps in generator
+        # 생성객체 피처맵
         self.ngf = 64
-        # Size of feature maps in discriminator
+        # 판별객체 피처맵
         self.ndf = 64
-        # Number of training epochs
-        self.num_epochs = 1 # Orginal Counter is 10
-        # Learning rate for optimizers
+        # 훈련횟수
+        self.num_epochs = 10 # 1회당 4분정도 걸림. 이 설정은 40분 작동함
+        # 최적화 학습률
         self.lr = 0.0002
-        # Beta1 hyperparam for Adam optimizers
+        # 아담 옵티마이저 하이퍼파라미터
         self.beta1 = 0.5
-        # Number of GPUs available. Use 0 for CPU mode.
+        # 사용가능한 GPU
         self.ngpu = 1
         self.manualSeed = 999
         self.device = None
+        self.dataloader = None
+
 
     def hook(self):
         self.show_face()
@@ -93,18 +94,19 @@ class DcGan(object):
                                        transforms.ToTensor(),
                                        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                                    ]))
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
+        self.dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                                  shuffle=True, num_workers=workers,
-                                                 multiprocessing_context='spawn') # spawn help speed up
+                                                 multiprocessing_context='spawn') # spawn 이 작동시간을 단축시킴
         self.device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
-        real_batch = next(iter(dataloader))
+        # 쿠다 프로그래밍 설정
+        real_batch = next(iter(self.dataloader))
         plt.figure(figsize=(8,8))
         plt.axis("off")
         plt.title("Training Images")
         plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(self.device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
         plt.show()
 
-    # custom weights initialization called on netG and netD
+    # 가중치 초기화 함수로 생성객체와 판별객체에서 사용함
     def weights_init(self, m):
         classname = m.__class__.__name__
         if classname.find('Conv') != -1:
@@ -114,7 +116,7 @@ class DcGan(object):
             nn.init.constant_(m.bias.data, 0)
 
     def print_netG(self):
-        # Create the generator
+        # 생성객체 인스턴스 생성
         ngpu = self.ngpu
         device = None
         netG = Generator(ngpu).to(device)
@@ -133,7 +135,7 @@ class DcGan(object):
     def print_netD(self):
         ngpu = self.ngpu
         device = self.device
-        # Create the Discriminator
+        # 판별객체 인스턴스 생성
         netD = Discriminator(ngpu).to(device)
 
         # Handle multi-gpu if desired
@@ -313,6 +315,7 @@ class Discriminator(nn.Module):
             # input is (nc) x 64 x 64
             nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
+            #
             # state size. (ndf) x 32 x 32
             nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ndf * 2),
