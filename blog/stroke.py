@@ -1,9 +1,11 @@
+import numpy as np
 import pandas as pd
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OrdinalEncoder
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.tree import DecisionTreeClassifier
-
+from sklearn.model_selection import GridSearchCV
 stroke_meta = {
     'id':'아이디', 'gender':'성별', 'age':'나이', 
     'hypertension':'고혈압',
@@ -57,7 +59,14 @@ class Stroke:
         self.y_test = None
 
     def hook(self):
-        pass
+        self.rename_meta()
+        self.interval()
+        self.norminal()
+        self.set_target()
+        self.partition()
+        self.learning(flag='gini')
+
+
 
     '''
     1.스펙보기
@@ -133,7 +142,7 @@ class Stroke:
         self.stroke = t
         self.spec()
         print(" ### 프리프로세스 종료 ### ")
-        self.stroke.to_csv(f"{self.save}/stroke.csv")
+        self.stroke.to_csv(f"{self.save}/stroke.csv", index=False)
 
     def ordinal(self): # 해당 컬럼이 없음
         pass
@@ -142,9 +151,10 @@ class Stroke:
     데이터프레임을 데이터 파티션하기 전에 타깃변수와 입력변수를 
     target 과 data 에 분리하여 저장한다.
     '''
-    def target(self):
-        df = pd.read_csv(f'{self.save}/stroke.csv')
+    def set_target(self):
+        df = pd.read_csv(f'{self.save}/stroke.csv') # Unnamed: 0 컬럼생성방지
         self.data = df.drop(['뇌졸중'], axis=1)
+        self.data = self.data.drop(['아이디'], axis=1) # 오버피팅 방지를 위해 아이디 삭제
         self.target = df['뇌졸중']
         print(f'--- data shape --- \n {self.data}')
         print(f'--- target shape --- \n {self.target}')
@@ -162,38 +172,51 @@ class Stroke:
         print("y_train shape:", self.y_train.shape)
         print("y_test shape:", self.y_test.shape)
 
-    def learning(self):
+    def learning(self, flag):
         X_train = self.X_train
         X_test = self.X_test
         y_train = self.y_train
         y_test = self.y_test
-        tree = DecisionTreeClassifier(random_state=0)
-        tree.fit(X_train, y_train)
-        print("Accuracy on training set: {:.5f}".format(tree.score(X_train, y_train)))
-        print("Accuracy on test set: {:.5f}".format(tree.score(X_test, y_test)))
+        if flag=='ccee':
+            tree = DecisionTreeClassifier(criterion="entropy", random_state=0, max_depth=5)
+            tree.fit(X_train, y_train)
+            print("Accuracy on training set: {:.5f}".format(tree.score(X_train, y_train)))
+            print("Accuracy on test set: {:.5f}".format(tree.score(X_test, y_test)))
+        elif flag=='gini':
+            tree = DecisionTreeClassifier(criterion="gini", random_state=0, max_depth=5)
+            params = {'criterion': ['gini', 'entropy'], 'max_depth': range(1,21)}
+            # 5회의 교차검증을 2개의 기준마다 20개의 max_depth 값으로 대입 (5 * 2 * 20 = 총 500회) 학습(fit) 됨
+            grid_tree = GridSearchCV(
+                tree,
+                param_grid=params,
+                scoring='accuracy',
+                cv=5, # 교차 검증 파라미터 5회실시
+                n_jobs=-1, # 멀티코어 CPU 모두 사용
+                verbose=1 # 연산중간 메시지 출력
+            )
+            grid_tree.fit(X_train, y_train)
+            tree.fit(X_train, y_train)
+            print("GridSerchCV max accuracy: {:.5f}".format(grid_tree.best_score_))
+            print("GridSerchCV best parameter: ",(grid_tree.best_params_))
+            best_clf = grid_tree.best_estimator_
+            pred = best_clf.predict(X_test)
+            print("Accuracy on test set: {:.5f}".format(accuracy_score(y_test, pred)))
+            print(f"Feature Importances: {best_clf.feature_importances_}") # 최적 모델의 변수 중요도
+            feature_names = list(self.data.columns)
+            dft = pd.DataFrame(np.round(best_clf.feature_importances_, 4),
+                               index=feature_names, columns=['Feature_importances'])
+            dft1 = dft.sort_values(by="Feature_importances", ascending=False)
+            print(dft1)
 
 
 
 
 stroke_menu = ["Exit", #0
-                "Spec",#1
-                "Rename",#2
-                "Inteval",#3 18세이상만 사용함
-                "Norminal",#4
-                "Target",#5
-                "Partition",#6
-                "미완성: Fit",#7
-                "미완성: Predicate"]#8
+                "Learning",#1
+             ]
 stroke_lambda = {
     "1" : lambda x: x.hook(),
-    "2" : lambda x: x.rename_meta(),
-    "3" : lambda x: x.interval_variables(),
-    "4" : lambda x: x.categorical_variables(),
-    "5" : lambda x: x.partition(),
-    "6" : lambda x: x.partition(),
-    "7" : lambda x: print(" ** No Function ** "),
-    "8" : lambda x: print(" ** No Function ** "),
-    "9" : lambda x: print(" ** No Function ** "),
+
 }
 if __name__ == '__main__':
     stroke = Stroke()
