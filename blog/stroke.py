@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OrdinalEncoder
 from imblearn.under_sampling import RandomUnderSampler
 
+
 stroke_meta = {
     'id':'아이디', 'gender':'성별', 'age':'나이', 
     'hypertension':'고혈압',
@@ -108,6 +109,7 @@ class Stroke:
 
     def ratio(self): # 해당 컬럼이 없음
         pass
+
     def norminal(self):
         t = self.adult_stoke
         category = ['성별', '심장병', '기혼여부', '직종', '거주형태', '흡연여부', '고혈압']
