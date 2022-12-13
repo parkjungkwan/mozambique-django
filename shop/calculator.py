@@ -19,46 +19,36 @@ class Calculator(object):
 class CalculatorService(object):
 
     @tf.function
-    def add(self, x: Calculator): return tf.add(x.num1, x.num2)
+    def add(self, num1: int, num2: int): return tf.add(num1, num2)
 
     @tf.function
-    def subtract(self, x: Calculator): return tf.subtract(x.num1, x.num2)
+    def subtract(self, num1: int, num2: int): return tf.subtract(num1, num2)
 
     @tf.function
-    def multiply(self, x: Calculator): return tf.multiply(x.num1, x.num2)
+    def multiply(self, num1: int, num2: int): return tf.multiply(num1, num2)
 
     @tf.function
-    def divide(self, x: Calculator): return tf.divide(x.num1, x.num2)
+    def divide(self, num1: int, num2: int): return tf.divide(num1, num2)
 
-calculator_menu = ["Exit", #0
-                "+", #1
-                "-", #2
-                "*", #3
-                "/", #4
-             ]
-calculator_lambda = {
-    "1" : lambda x, y: print(f" {y.num1} + {y.num2} = {x.add(y)}"),
-    "2" : lambda x, y: print(f" {y.num1} + {y.num2} = {x.subtract(y)}"),
-    "3" : lambda x, y: print(f" {y.num1} + {y.num2} = {x.multiply(y)}"),
-    "4" : lambda x, y: print(f" {y.num1} + {y.num2} = {x.divide(y)}"),
-}
 if __name__ == '__main__':
     calculator = Calculator()
-    calculator.num1 = 9
-    calculator.num2 = 3
     service = CalculatorService()
     while True:
-        [print(f"{i}. {j}") for i, j in enumerate(calculator_menu)]
-        menu = input('메뉴선택: ')
-        if menu == '0':
+        num1 = input('숫자 1 입력\n')
+        a = tf.constant(int(num1))
+        opcode = input('0,+,-,*,/ \n')
+        num2 = input('숫자 2 입력\n')
+        b = tf.constant(int(num2))
+        if opcode == '0':
             print("종료")
             break
+        elif opcode == '+':
+            print(f" {a} + {b} = {service.add(a, b)}")
+        elif opcode == '-':
+            print(f" {a} + {b} = {service.subtract(a, b)}")
+        elif opcode == '*':
+            print(f" {a} + {b} = {service.multiply(a, b)}")
+        elif opcode == '/':
+            print(f" {a} + {b} = {service.divide(a, b)}")
         else:
-            try:
-                calculator_lambda[menu](service, calculator)
-            except KeyError as e:
-                if 'some error message' in str(e):
-                    print('Caught error message')
-                else:
-                    print("Didn't catch error message")
-
+            print('존재하지 않는 연산자')
