@@ -65,6 +65,10 @@ model 은 var 를 잡아내서, class 를 시도한다.
 연역은 가정된 전제이다.
 귀납은 개인적 경험이다.
 
+## 인코딩(encoding)
+문자 -> 숫자
+
+
 # 편향과 편차
 https://opentutorials.org/module/3653/22071
 정답 하나를 맞추기 위해 컴퓨터는 여러 번의 예측값 내놓기를 시도하는데,
@@ -125,3 +129,7 @@ standard, normal, norm, average, level 이 있다.
 
 ## 산술급수 와 기하급수
 
+
+##
+fit_transform()은 train dataset에서만 사용됩니다
+transform()은 test data에 적용하기 위해 를 사용한다.

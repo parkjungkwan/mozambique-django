@@ -1,32 +1,50 @@
 import pandas as pd
 import tensorflow as tf
+from keras import Sequential
+from keras.layers import Dense
+from sklearn import datasets
+from sklearn.preprocessing import OneHotEncoder
 
+'''
+Iris Species
+Classify iris plants into three species in this classic dataset
+'''
 class Iris(object):
     def __init__(self):
-        self.data = pd.read_csv(r'C:\Users\AIA\PycharmProjects\djangoProject\data\Iris.csv')
+        self.iris = datasets.load_iris()
+        print(f'type {type(self.iris)}') # type <class 'sklearn.utils._bunch.Bunch'>
+        self._X = self.iris.data
+        self._Y = self.iris.target
+
 
     def hook(self):
-        self.spec()
+        # self.spec()
+        self.create_model()
 
     def spec(self):
-        print(" --- 1.Shape ---")
-        print(self.data.shape)
-        print(" --- 2.Features ---")
-        print(self.data.columns)
-        print(" --- 3.Info ---")
-        print(self.data.info())
-        print(" --- 4.Case Top1 ---")
-        print(self.data.head(1))
-        print(" --- 5.Case Bottom1 ---")
-        print(self.data.tail(3))
-        print(" --- 6.Describe ---")
-        print(self.data.describe())
-        print(" --- 7.Describe All ---")
-        print(self.data.describe(include='all'))
+        print(f'{self.iris.feature_names}')
         '''
         Shape (150, 6)
         ['Id', 'SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm','Species']
         '''
+
+    def create_model(self):
+        X = self._X
+        Y = self._Y
+        enc = OneHotEncoder()
+        Y_1hot = enc.fit_transform(Y.reshape(-1,1)).toarray()
+        model = Sequential()
+        model.add(Dense(4, input_dim=4, activation='relu'))
+        model.add(Dense(3, activation='softmax'))
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model.fit(X, Y_1hot, epochs=300, batch_size=10)
+        print('Model Training is completed')
+
+        file_name = './save/iris_model.h5'
+        model.save(file_name)
+        print(f'Model Saved in {file_name}')
+
+
 
 
 iris_menu = ["Exit", #0
