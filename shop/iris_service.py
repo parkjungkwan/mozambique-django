@@ -16,7 +16,7 @@ class IrisService(object):
 
     def service_model(self, features):
         features = [
-            args['se']
+
         ]
         features = np.reshape(features, (1, 4))
 
