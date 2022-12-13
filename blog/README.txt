@@ -51,7 +51,7 @@ learning 은 target 을 구하는 modeling 이다.
 
 
 
-지도학습 분류 classification / 회귀 regress 로 나뉜다.
+지도학습 분류 classification / 회귀 regression 로 나뉜다.
 model 은 var 를 잡아내서, class 를 시도한다.
 
 ## (확률) 분포는 함수다
@@ -133,3 +133,12 @@ standard, normal, norm, average, level 이 있다.
 ##
 fit_transform()은 train dataset에서만 사용됩니다
 transform()은 test data에 적용하기 위해 를 사용한다.
+
+## 행렬 연산(Matrix Operations)
+
+ 행렬 표기법 - Matrix Notation
+
+ 행렬 덧셈 - Matrix Sum
+ 스칼라 곱 - Scalar Multiple
+ 행렬 곱 - Matrix Multiplication
+ 행렬의 전치 - The transpose of a matrix

@@ -9,7 +9,7 @@ from sklearn.preprocessing import OneHotEncoder
 Iris Species
 Classify iris plants into three species in this classic dataset
 '''
-class Iris(object):
+class IrisModel(object):
     def __init__(self):
         self.iris = datasets.load_iris()
         print(f'type {type(self.iris)}') # type <class 'sklearn.utils._bunch.Bunch'>
@@ -47,13 +47,15 @@ class Iris(object):
 
 
 
+
+
 iris_menu = ["Exit", #0
                 "hook"] #1
 iris_lambda = {
     "1" : lambda x: x.hook(),
 }
 if __name__ == '__main__':
-    iris = Iris()
+    iris = IrisModel()
     while True:
         [print(f"{i}. {j}") for i, j in enumerate(iris_menu)]
         menu = input('메뉴선택: ')
