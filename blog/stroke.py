@@ -66,6 +66,7 @@ class Stroke:
         self.y_test = None
 
     def hook(self):
+        print(" 리액트에서 들어옴 !!")
         self.rename_meta()
         self.interval()
         self.norminal()
@@ -219,12 +220,6 @@ class Stroke:
                 ax.annotate("%.3f" % p.get_width(), (p.get_x() + p.get_width(), p.get_y()+1),
                             xytext = (5, 10), textcoords = 'offset points')
             plt.show()
-
-
-
-
-
-
 
 stroke_menu = ["Exit", #0
                 "Learning",#1
