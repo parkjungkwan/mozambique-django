@@ -1,7 +1,7 @@
 from django.http import JsonResponse, QueryDict
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import JSONParser
-
+import tensorflow as tf
 '''
 아이리스 품종 3: setosa, versicolor, virginica
 'SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm'
@@ -10,11 +10,20 @@ from rest_framework.parsers import JSONParser
 QueryDict 관련 블로그
 https://velog.io/@qlgks1/Django-request-HttpRequest-QueryDict
 '''
-@api_view(['POST'])
+@api_view(['GET'])
 @parser_classes([JSONParser])
 def find_iris(request):
+    iris_data = request.data
     print(f'리액트에서 보낸 데이터: {request.data}')
-    sepal_length_cm = QueryDict.getitem("SepalLengthCm")
-    print(f'넘어온 꽃받침 길이: {sepal_length_cm}')
-    print(f'찾는 품종: {request.data}')
-    return JsonResponse({'result':'virginica'})
+    SepalLengthCm = tf.constant(float(iris_data['SepalLengthCm']))
+    SepalWidthCm = tf.constant(float(iris_data['SepalWidthCm']))
+    PetalLengthCm = tf.constant(float(iris_data['PetalLengthCm']))
+    PetalWidthCm = tf.constant(float(iris_data['PetalWidthCm']))
+    print(f'리액트에서 보낸 데이터 : {iris_data}')
+    print(f'꽃받침의 길이 : {SepalLengthCm}')
+    print(f'꽃받침의 너비 : {SepalWidthCm}')
+    print(f'꽃잎의 길이: {PetalLengthCm}')
+    print(f'꽃잎의 너비 : {PetalWidthCm}')
+    result = None
+    print(f'찾는 품종: {result}')
+    return JsonResponse({'result':{result}})

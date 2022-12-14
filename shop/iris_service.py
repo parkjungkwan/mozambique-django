@@ -11,14 +11,17 @@ class IrisService(object):
     def __init__(self):
         global model, graph, target_names
         model = load_model('./save/iris_model.h5')
+
         graph = tf.get_default_graph()
         target_names = datasets.load_iris().target_names
 
     def service_model(self, features):
-        features = [
-
-        ]
+        # features = []
         features = np.reshape(features, (1, 4))
+        with graph.as_default():
+            Y_pred = model.predict_classes(features)
+        return {"specises": target_names[Y_pred[0]]}
+
 
 
 

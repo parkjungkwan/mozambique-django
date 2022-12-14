@@ -11,21 +11,42 @@ Classify iris plants into three species in this classic dataset
 '''
 class IrisModel(object):
     def __init__(self):
-        self.iris = datasets.load_iris()
-        print(f'type {type(self.iris)}') # type <class 'sklearn.utils._bunch.Bunch'>
-        self._X = self.iris.data
-        self._Y = self.iris.target
+        global iris, _X, _Y
+        iris = datasets.load_iris()
+        print(f'type {type(iris)}') # type <class 'sklearn.utils._bunch.Bunch'>
+        _X = iris.data
+        _Y = iris.target
 
 
     def hook(self):
-        # self.spec()
-        self.create_model()
+        self.spec()
+        # self.create_model()
 
     def spec(self):
-        print(f'{self.iris.feature_names}')
+        print(" --- 1.Features ---")
+        print(iris['feature_names'])
+        print(" --- 2.target ---")
+        print(iris['target'])
+        print(" --- 3.print ---")
+        print(iris)
         '''
         Shape (150, 6)
         ['Id', 'SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm','Species']
+        
+        print(" --- 1.Shape ---")
+        print(iris.shape)
+        print(" --- 2.Features ---")
+        print(iris.columns)
+        print(" --- 3.Info ---")
+        print(iris.info())
+        print(" --- 4.Case Top1 ---")
+        print(iris.head(1))
+        print(" --- 5.Case Bottom1 ---")
+        print(iris.tail(3))
+        print(" --- 6.Describe ---")
+        print(iris.describe())
+        print(" --- 7.Describe All ---")
+        print(iris.describe(include='all'))
         '''
 
     def create_model(self):
@@ -55,7 +76,7 @@ iris_lambda = {
     "1" : lambda x: x.hook(),
 }
 if __name__ == '__main__':
-    iris = IrisModel()
+    iris_model = IrisModel()
     while True:
         [print(f"{i}. {j}") for i, j in enumerate(iris_menu)]
         menu = input('메뉴선택: ')
@@ -64,7 +85,7 @@ if __name__ == '__main__':
             break
         else:
             try:
-                iris_lambda[menu](iris)
+                iris_lambda[menu](iris_model)
             except KeyError as e:
                 if 'some error message' in str(e):
                     print('Caught error message')
