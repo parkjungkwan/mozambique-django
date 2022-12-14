@@ -26,4 +26,10 @@ def find_iris(request):
     print(f'꽃잎의 너비 : {PetalWidthCm}')
     result = None
     print(f'찾는 품종: {result}')
+    if result == 0:
+        print('setosa / 부채붓꽃')
+    elif result == 1:
+        print('versicolor / 버시칼라 ')
+    elif result == 2:
+        print('virginica / 버지니카')
     return JsonResponse({'result':{result}})
