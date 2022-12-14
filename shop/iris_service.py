@@ -11,19 +11,13 @@ class IrisService(object):
     def __init__(self):
         global model, graph, target_names
         model = load_model('./save/iris_model.h5')
-
-        graph = tf.get_default_graph()
         target_names = datasets.load_iris().target_names
 
-    def service_model(self, features):
-        # features = []
+    def service_model(self, features): # features = []
         features = np.reshape(features, (1, 4))
-        with graph.as_default():
-            Y_pred = model.predict_classes(features)
-        return {"specises": target_names[Y_pred[0]]}
-
-
-
+        Y_prob = model.predict(features, verbose=0)
+        predicted = Y_prob.argmax(axis=-1)
+        return predicted[0]  # p-value 가 가장 높은 것
 
 iris_menu = ["Exit", #0
                 "hook"] #1
